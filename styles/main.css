@@ -1,0 +1,42 @@
+.circle {
+    height: 100%;
+    width: 100%;
+    background-color:black;
+    border-radius: 50%;
+    display: inline-block;
+    margin: 10%;
+}
+
+.outer-board {
+    width: 70vmin;
+    height: 60vmin;
+    background-color: yellow;
+    display: flex;
+    flex: 0 0 max-content;
+    justify-content: center;
+    align-items: center;
+    align-content: center;
+    padding: 2.5%;
+}
+
+.pieces-container {
+    height: 100%;
+    width: 100%;
+    display: flex;
+    flex-wrap: nowrap;
+    justify-content: center;
+    align-items: center;
+    align-content: center;
+}
+
+.column {
+    height: 100%;
+    width: 100%;
+    display: flex;
+    flex-wrap: nowrap;
+    justify-content: center;
+    align-items: center;
+    align-content: center;
+    flex-direction: column;
+    margin: 1%;
+}
