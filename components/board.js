@@ -9,8 +9,8 @@ class Board extends HTMLElement {
         // Get relevant elements
         let boardTemplate = document.getElementById('board');
         let boardContent = boardTemplate.content.cloneNode(true);
-        let boardOuter = boardContent.querySelector('div');
-        let boardContainer = boardOuter.querySelector('div');
+        let boardDrop = boardContent.getElementById('indicator-container');
+        let boardContainer = boardContent.getElementById('pieces-container');
 
         // Add the game-pieces
         this.pieces = [];
@@ -18,7 +18,8 @@ class Board extends HTMLElement {
             this.pieces.push([]);
             let column = document.createElement('div');
             column.setAttribute('class', 'column');
-            column.setAttribute('onclick', 'getBoard().dropPiece(' + i + ')')
+            column.setAttribute('onclick', 'getBoard().dropPiece(' + i + '); getBoard().showMove(' + i + ')')
+            column.setAttribute('onmouseover', 'getBoard().showMove(' + i + ')');
 
             for(let j=0; j < 6; j++) {
                 let piece = new Piece();
@@ -27,6 +28,20 @@ class Board extends HTMLElement {
                 column.appendChild(piece.element);
             }
             boardContainer.appendChild(column);
+        }
+
+        this.pieceIndicators = [];
+        for(let i=0; i < 7; i++) {
+            let piece = new Piece();
+
+            // column schenanigans to get correct spacing
+            let column = document.createElement('div');
+            column.setAttribute('class', 'column');
+            column.appendChild(piece.element);
+
+            piece.hide();
+            this.pieceIndicators.push(piece);
+            boardDrop.appendChild(column);
         }
 
         // Set whose turn it is
@@ -48,10 +63,10 @@ class Board extends HTMLElement {
         }
 
         if(this.turn == 'red') {
-            this.pieces[column][row].fillBlue();
+            this.pieces[column][row].fillRed();
             this.turn = 'blue';
         } else {
-            this.pieces[column][row].fillRed();
+            this.pieces[column][row].fillBlue();
             this.turn = 'red';
         }
 
@@ -59,10 +74,27 @@ class Board extends HTMLElement {
     }
 
     empty() {
-        for(let i = 0; i < 7; i++) {
-            for(let j = 0; j < 6; j++) {
+        for(let i=0; i < 7; i++) {
+            for(let j=0; j < 6; j++) {
                 this.pieces[i][j].empty();
             }
+        }
+    }
+
+    showMove(column) {
+        this.pieceIndicators[column].show();
+        this.pieceIndicators[column].element.style.backgroundColor = this.turn;
+
+        for(let i=0; i < 7; i++) {
+            if(i != column) {
+                this.pieceIndicators[i].hide();
+            }
+        }
+    }
+
+    hideMoves() {
+        for(let i=0; i < 7; i++) {
+            this.pieceIndicators[i].hide();
         }
     }
 
@@ -87,5 +119,12 @@ class Piece {
     }
     empty() {
         this.element.style.backgroundColor = 'black';
+    }
+
+    show() {
+        this.element.style.opacity = '1.0';
+    }
+    hide() {
+        this.element.style.opacity = '0.0';
     }
 }

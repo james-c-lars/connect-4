@@ -9,9 +9,14 @@
 
 <template id="board">
     <link rel="stylesheet" href="styles/board.css">
-    <div class="outer-board">
-        <div class="pieces-container">
-            <!-- 7 column divs are added here, each with 6 circle spans -->
+    <div class="board">
+        <div class="indicator-container" id="indicator-container">
+            <!-- 7 pieces are put here to represent dropping one in each column -->
+        </div>
+        <div class="outer-board" onmouseout="getBoard().hideMoves()">
+            <div class="pieces-container" id="pieces-container">
+                <!-- 7 column divs are added here, each with 6 circle spans -->
+            </div>
         </div>
     </div>
 </template>

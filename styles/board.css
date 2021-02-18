@@ -6,6 +6,24 @@
     margin: 10%;
 }
 
+.board {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    align-content: center;
+    flex-direction: column;
+}
+
+.indicator-container {
+    width: 70vmin;
+    height: 10vmin;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    align-content: center;
+    padding: 2.5%;
+}
+
 .outer-board {
     width: 70vmin;
     height: 60vmin;
