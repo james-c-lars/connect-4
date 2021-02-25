@@ -1,3 +1,6 @@
+/*
+ * Piece styling
+ */
 .circle {
     height: 100%;
     width: 100%;
@@ -6,7 +9,10 @@
     margin: 10%;
 }
 
-.board {
+/*
+ * Overall game-board element styling
+ */
+ .board {
     display: flex;
     justify-content: center;
     align-items: center;
@@ -14,6 +20,9 @@
     flex-direction: column;
 }
 
+/* 
+ * Indicator
+ */
 .indicator-container {
     width: 70vmin;
     height: 10vmin;
@@ -24,6 +33,10 @@
     padding: 2.5%;
 }
 
+
+/*
+ * Board
+ */
 .outer-board {
     width: 70vmin;
     height: 60vmin;
@@ -55,4 +68,23 @@
     align-content: center;
     flex-direction: column-reverse;
     margin: 1%;
+}
+
+/*
+ * Settings
+ */
+.game-settings {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    align-content: center;
+}
+
+.game-settings > div {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    align-content: center;
+    flex-direction: column;
+    padding: 5%;
 }
