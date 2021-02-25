@@ -60,7 +60,7 @@ class Board extends HTMLElement {
             let column = document.createElement('div');
             column.setAttribute('class', 'column');
             column.setAttribute('onclick', 'getBoard().makeMove(' + i + ')')
-            column.setAttribute('onmouseover', 'getBoard().showMove(' + i + ')');
+            column.setAttribute('onmouseover', 'getBoard().colOnMouseOver(' + i + ')');
 
             for(let j=0; j < 6; j++) {
                 let piece = new Piece();
@@ -198,9 +198,45 @@ class Board extends HTMLElement {
         }
     }
 
+    thinkingIndicator() {
+        // Coloring the pieces in a pleasing manner
+        for(let col=0; col < 7; col++) {
+            this.pieceIndicators[col].fill(col % 2 + 1)
+        }
+
+        // Code to iterate through the move previews
+        // i goes from -6 to 5, then starts over again at -6
+        let i = -6;
+        let intervalID = setInterval(function() {
+            getBoard().showMove(6 - Math.abs(i));       // 6 - |i| so that the piece starts on the left side
+            i++;
+            if(i > 5) {
+                i=-6;
+            }
+        }, 250);
+
+        return intervalID;
+    }
+
+    colOnMouseOver(column) {
+        if(this.enable) {
+            this.showMove(column);
+            return true;
+        }
+        return false;
+    }
+
+    boardOnMouseOut() {
+        if(this.enable) {
+            this.hideMoves();
+            return true;
+        }
+        return false;
+    }
+
     showMove(column) {
-        this.pieceIndicators[column].show();
         this.pieceIndicators[column].fill(this.turn);
+        this.pieceIndicators[column].show();
 
         for(let i=0; i < 7; i++) {
             if(i != column) {

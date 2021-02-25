@@ -29,6 +29,11 @@ class DecisionTree {
         this.generateNodes(foresight);
     }
 
+    /**
+     * Returns the number of nodes in the decision tree
+     * 
+     * @param {Number} node 
+     */
     size(node) {
         let s = 1;
         for(let i=0; i < node.children.length; i++) {
