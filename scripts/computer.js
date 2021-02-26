@@ -1,4 +1,8 @@
-var foresight = 10000;
+var foresight = 50000;
+
+
+
+
 
 /**
  * Manages the tree of BoardNodes
@@ -11,22 +15,9 @@ class DecisionTree {
      */
     constructor(board) {
         this.root = new BoardNode();
-        this.turn = board.turn;
+        this.turn = 1;
 
-        // Constructing the board state of our root node
-        for(let col=0; col < 7; col++) {
-            for(let row=0; row < 6; row++) {
-                if(board.pieces[col][row] == colorOne) {
-                    this.root.ghostBoard[col][row] = 1;
-                } else if(board.pieces[col][row] == colorTwo) {
-                    this.root.ghostBoard[col][row] = 2;
-                } else {
-                    this.root.ghostBoard[col][row] = 0;
-                }
-            }
-        }
-
-        this.generateNodes(foresight);
+        this.generateNodes();
     }
 
     /**
@@ -73,7 +64,7 @@ class DecisionTree {
         }
         this.root = newRoot;
 
-        this.generateNodes(foresight);
+        this.generateNodes();
         console.log('Tree size: ' + this.size(this.root));
     }
 
@@ -127,11 +118,11 @@ class DecisionTree {
      * 
      * @param {Number} count 
      */
-    generateNodes(count) {
+    generateNodes() {
         // We will iterate through this queue and add more nodes to the end
         let queue = this.getLeaves(this.root);
         
-        for(let i=0; i < count && i < queue.length; i++) {
+        for(let i=0; i < foresight && i < queue.length; i++) {
             // If the node is a won board state
 
             // Generate some new board states
@@ -396,5 +387,32 @@ class BoardNode {
                 if(this.score(count)) return;
             }
         }
+    }
+}
+
+
+
+
+/*
+ * Worker functionality
+ */
+
+var tree = new DecisionTree();
+
+onmessage = function (message) {
+    let operation = message.data.type;
+
+    if(operation == 'update') {
+        let column = message.data.column;
+        tree.update(column);
+        postMessage( {gameOver: tree.gameOver()} );
+    }
+    else if (operation == 'makeMove') {
+        let bestMove = tree.bestMove();
+        tree.update(bestMove);
+
+        postMessage( {gameOver: tree.gameOver(), bestMove: bestMove} );
+    } else {
+        console.log('computer got unknown operation in message' + message);
     }
 }

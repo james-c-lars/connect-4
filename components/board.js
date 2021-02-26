@@ -59,7 +59,7 @@ class Board extends HTMLElement {
             // Create column div element
             let column = document.createElement('div');
             column.setAttribute('class', 'column');
-            column.setAttribute('onclick', 'getBoard().makeMove(' + i + ')')
+            column.setAttribute('onclick', 'getBoard().humanMove(' + i + ')')
             column.setAttribute('onmouseover', 'getBoard().colOnMouseOver(' + i + ')');
 
             for(let j=0; j < 6; j++) {
@@ -96,7 +96,7 @@ class Board extends HTMLElement {
         this.enable = false;
 
         // Attach a DecisionTree to the board
-        this.computer = new DecisionTree(this);
+        this.computer = new Worker('./scripts/computer.js');
 
         // Whether the AI or a human is controlling each color
         this.control = {1:this.playerOneSelect.value, 2:this.playerTwoSelect.value};
@@ -107,7 +107,12 @@ class Board extends HTMLElement {
     }
 
     beginGame() {
-        this.moveController();
+        if(this.control[this.turn] == 'human') {
+            this.enable = true;
+        } else {
+            this.id = this.thinkingIndicator();
+            this.computerMove();
+        }
 
         this.beginButton.disabled = true;
         this.playerOneSelect.disabled = true;
@@ -122,27 +127,32 @@ class Board extends HTMLElement {
         }
     }
 
-    moveController() {
-        // If a computer is going next, make its move
-        if(this.control[this.turn] == 'computer') {
-            this.dropPiece(this.computer.bestMove());
+    computerMove() {
+        this.computer.onmessage = function (message) {
+            let gameOver = message.data.gameOver;
+            let bestMove = message.data.bestMove;
+
+            getBoard().dropPiece(bestMove);
+
+            // If the game is over, disable the board
+            if(gameOver != 0) {
+                getBoard().enable = false;
+                clearInterval(getBoard().id);
+                getBoard().hideMoves();
+            } else if(getBoard().control[getBoard().turn] == 'human') {
+                clearInterval(getBoard().id);
+                getBoard().hideMoves();
+
+                getBoard().enable = true;
+            } else {
+                getBoard().computerMove();
+            }
         }
 
-        // If the game is over, disable the board
-        if(this.computer.gameOver() != 0) {
-            this.enable = false;
-        }
-        // If the game isn't over and it's the computer's turn, take it from the top
-        else if(this.control[this.turn] == 'computer') {
-            this.moveController();
-        }
-        // If the game isn't over and it's the human's turn, let them interact with the board
-        else {
-            this.enable = true;
-        }
+        this.computer.postMessage({type:'makeMove'});
     }
 
-    makeMove(column) {
+    humanMove(column) {
         // If the board isn't enabled don't do anything
         if(!(this.enable)) {
             return;
@@ -154,11 +164,29 @@ class Board extends HTMLElement {
         // Place the piece
         this.dropPiece(column);
 
-        // Update the indicator
-        this.showMove(column);
 
-        // Let the move controller decide what happens next
-        this.moveController();
+        this.id = this.thinkingIndicator();
+
+        // Update computer
+        this.computer.onmessage = function (message) {
+            let gameOver = message.data.gameOver;
+
+            // If the game is over, disable the board
+            if(gameOver != 0) {
+                getBoard().enable = false;
+                clearInterval(getBoard().id);
+                getBoard().hideMoves();
+            } else if(getBoard().control[getBoard().turn] == 'human') {
+                clearInterval(getBoard().id);
+                getBoard().hideMoves();
+
+                getBoard().enable = true;
+            } else {
+                getBoard().computerMove();
+            }
+        }
+
+        this.computer.postMessage({type:'update', column:column});
     }
 
     dropPiece(column) {
@@ -181,12 +209,6 @@ class Board extends HTMLElement {
         this.pieces[column][row].fill(this.turn);
         this.turn = 3 - this.turn;
 
-        /*
-         * Handling the computer's internal representation of the board state
-         */
-
-        this.computer.update(column);
-
         return true;
     }
 
@@ -199,11 +221,6 @@ class Board extends HTMLElement {
     }
 
     thinkingIndicator() {
-        // Coloring the pieces in a pleasing manner
-        for(let col=0; col < 7; col++) {
-            this.pieceIndicators[col].fill(col % 2 + 1)
-        }
-
         // Code to iterate through the move previews
         // i goes from -6 to 5, then starts over again at -6
         let i = -6;
