@@ -114,9 +114,27 @@ class Board extends HTMLElement {
             this.computerMove();
         }
 
-        this.beginButton.disabled = true;
         this.playerOneSelect.disabled = true;
         this.playerTwoSelect.disabled = true;
+
+        this.beginButton.setAttribute('onclick', 'getBoard().resetGame()');
+        this.beginButton.textContent = 'Reset Game';
+    }
+
+    resetGame() {
+        this.enable = false;
+        this.empty();
+        this.hideMoves();
+        this.turn = 1;
+        clearInterval(this.id);
+        this.computer.terminate();
+        this.computer = new Worker('./scripts/computer.js');
+
+        this.playerOneSelect.disabled = false;
+        this.playerTwoSelect.disabled = false;
+
+        this.beginButton.setAttribute('onclick', 'getBoard().beginGame()');
+        this.beginButton.textContent = 'Begin Game';
     }
 
     changePlayers(playerNum) {
