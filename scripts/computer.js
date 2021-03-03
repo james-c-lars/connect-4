@@ -1,4 +1,4 @@
-var foresight = 50000;
+var foresight = 100000;
 
 
 

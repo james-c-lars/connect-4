@@ -41,7 +41,7 @@ class Board extends HTMLElement {
         super();
 
         // Get relevant elements
-        let boardTemplate = document.getElementById('board');
+        let boardTemplate = document.getElementById('template-board');
         let boardContent = boardTemplate.content.cloneNode(true);
         let boardDrop = boardContent.getElementById('indicator-container');
         let boardContainer = boardContent.getElementById('pieces-container');
