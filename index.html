@@ -9,33 +9,39 @@
 
 <template id="template-board">
     <link rel="stylesheet" href="styles/board.css">
+
     <div class="board">
-        <div class="indicator-container" id="indicator-container">
-            <!-- 7 pieces are put here to represent dropping one in each column -->
+
+        <div class="indicator-container">
+            <!-- A piece will be added here to float above the board -->
         </div>
-        <div class="outer-board" onmouseout="getBoard().boardOnMouseOut()">
-            <div class="pieces-container" id="pieces-container">
-                <!-- 7 column divs are added here, each with 6 circle spans -->
-            </div>
+
+        <div class="piece-container">
+            <!-- 7 column divs are added here, each with 6 pieces -->
         </div>
+
         <div class="game-settings">
+
             <div>
-                <button id="begin-button" onclick="getBoard().beginGame()"> Begin Game </button>
+                <button class="begin-button"> Begin Game </button>
             </div>
+
             <div>
-            <label for="player-one">Player One:</label>
-                <select name="Player One" id="player-one" onchange="getBoard().changePlayers(1)">
+                <label for="player-one">Player One:</label>
+                <select class="player-one" name="Player One">
                     <option value="human">Human</option>
                     <option value="computer">Computer</option>
                 </select>
             </div>
+
             <div>
                 <label for="player-two">Player Two:</label>
-                <select name="Player Two" id="player-two" onchange="getBoard().changePlayers(2)">
+                <select class="player-two" name="Player Two">
                     <option value="human">Human</option>
                     <option value="computer">Computer</option>
                 </select>
             </div>
+
             <div>
                 <img src="./assets/setting-icon.png" class="setting-icon">
             </div>
@@ -45,8 +51,9 @@
 
 
 <body>
-    <script src="components/board.js"></script>
-    <game-board></game-board>
+    <!-- <script src="components/board.js"></script>
+    <game-board></game-board> -->
+    <script src="scripts/new_computer.js"></script>
 </body>
 
 </html>

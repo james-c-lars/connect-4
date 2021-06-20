@@ -1,15 +1,4 @@
 /*
- * Piece styling
- */
-.circle {
-    height: 100%;
-    width: 100%;
-    border-radius: 50%;
-    display: inline-block;
-    margin: 10%;
-}
-
-/*
  * Overall game-board element styling
  */
  .board {
@@ -20,55 +9,6 @@
     flex-direction: column;
 }
 
-/* 
- * Indicator
- */
-.indicator-container {
-    width: 70vmin;
-    height: 10vmin;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    align-content: center;
-    padding: 2.5%;
-}
-
-
-/*
- * Board
- */
-.outer-board {
-    width: 70vmin;
-    height: 60vmin;
-    background-color: yellow;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    align-content: center;
-    padding: 2.5%;
-}
-
-.pieces-container {
-    height: 100%;
-    width: 100%;
-    display: flex;
-    flex-wrap: nowrap;
-    justify-content: center;
-    align-items: center;
-    align-content: center;
-}
-
-.column {
-    height: 100%;
-    width: 100%;
-    display: flex;
-    flex-wrap: nowrap;
-    justify-content: center;
-    align-items: center;
-    align-content: center;
-    flex-direction: column-reverse;
-    margin: 1%;
-}
 
 /*
  * Settings
@@ -92,4 +32,99 @@
 .setting-icon {
     width: 2rem;
     height: 2rem;
+}
+
+
+
+
+
+game-piece {
+    --piece-color: darkblue;
+
+    width: var(--piece-size);
+    height: var(--piece-size);
+    margin: var(--piece-margin);
+    border-radius: 50%;
+
+    position: relative;
+    overflow: hidden;
+
+    background-color: black;
+    box-shadow: 0 0 0 0.25rem goldenrod;
+
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+}
+
+game-piece::after, game-piece::before {
+    content: '';
+
+    display: block;
+    position: absolute;
+
+    width: calc(var(--piece-size) * 2 / 3);
+    height: calc(var(--piece-size) * 2 / 3);
+    border-radius: 50%;
+
+    background-color: var(--piece-color);
+    box-shadow: 0 0 0 calc(var(--piece-size)/12) rgba(255, 255, 255, 0.25),
+    0 0 0 calc(var(--piece-size)/6) var(--piece-color);
+}
+
+.blank-piece::before {
+    transform: translateY(calc(-1 * (var(--piece-size) + 2*var(--piece-margin))));
+    transition: transform 0ms linear;
+}
+
+.full-piece::before {
+    transform: translateY(0);
+    transition: transform 100ms linear;
+}
+
+.full-piece::after {
+    transform: translateY(0);
+    transition: transform 0ms 100ms linear;
+}
+
+.blank-piece::after {
+    transform: translateY(calc(var(--piece-size) + 2*var(--piece-margin)));
+    transition: transform 100ms linear;
+}
+
+.no-transition::before, .no-transition::after {
+    transition: transform 0ms 0ms linear;
+}
+
+
+
+
+.indicator-container {
+    --piece-size: 4rem;
+    --piece-margin: 0.5rem;
+
+    padding: 0.5rem;
+
+    display: inline-flex;
+}
+
+.piece-container {
+    --piece-size: 4rem;
+    --piece-margin: 0.5rem;
+
+    padding: 0.5rem;
+    border-radius: 1rem;
+
+    display: inline-flex;
+    flex-wrap: nowrap;
+    flex-direction: row;
+
+    background-color: gold;
+    box-shadow: 0 0 0 0.25rem goldenrod;
+}
+
+
+.column {
+    display: inline-flex;
+    flex-direction: column;
 }
