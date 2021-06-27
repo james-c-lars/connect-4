@@ -1,5 +1,136 @@
+// NOTE Possible optimization by having NonLeafNode only check a single piece for a win
+
 const bytesPerBoard = 14;
-const maxDepth = 11;
+const bytesPerBoardN = BigInt(bytesPerBoard);
+
+class BigByteArray {
+    static ARRAY_SIZE = 0xffffffffn - (0xffffffffn % BigInt(bytesPerBoard));
+
+    constructor(length) {
+        this.length = length;
+        this._arrays = [];
+
+        while(length > BigByteArray.ARRAY_SIZE) {
+            this._arrays.push(new Uint8Array(Number(BigByteArray.ARRAY_SIZE)));
+            length -= BigByteArray.ARRAY_SIZE;
+        }
+        this._arrays.push(new Uint8Array(Number(length)));
+
+        this._currArray = 0;
+        this._index = 0;
+    }
+
+    jumpTo(index) {
+        this._currArray = 0;
+        while(this._currArray < this._arrays.length && index >= this._arrays[this._currArray].length) {
+            index -= BigInt(this._arrays[this._currArray].length);
+            this._currArray++;
+        }
+        this._index = Number(index);
+    }
+
+    jumpAhead(index) {
+        index += BigInt(this._index);
+        while(this._currArray < this._arrays.length && index >= this._arrays[this._currArray].length) {
+            index -= BigInt(this._arrays[this._currArray].length);
+            this._currArray++;
+        }
+        this._index = Number(index);
+    }
+
+    ended() {
+        return this._currArray >= this._arrays.length || (this._currArray == this._arrays.length - 1 && this._index >= this._arrays[this._currArray].length);
+    }
+
+    nextBoard() {
+        if(this._index >= this._arrays[this._currArray].length) {
+            this._index = 0;
+            this._currArray++;
+
+            if(this._currArray >= this._arrays.length) {
+                throw `Read past the end of a BigByteArray of length ${this.length}`;
+            }
+        }
+
+        if(this._index + bytesPerBoard > this._arrays[this._currArray].length) {
+            throw `The spacing got messed up somehow.\n` +
+                  `length:${this.length}, index:${this._index}, currArray:${this._currArray}, currArrayLen:${this._arrays[this._currArray].length}`
+        }
+
+        let view = this._arrays[this._currArray].subarray(this._index, this._index + bytesPerBoard);
+        this._index += bytesPerBoard;
+        return view;
+    }
+
+    trim(offset, length) {
+        if(length + offset > this.length) {
+            throw `Tried to trim a BigByteArray of length:${this.length} with offset:${offset} and length:${length}`;
+        }
+
+        this.length = length;
+
+        /*
+         * Trimming from the start of the arrays using offset
+         */
+
+        // Getting the offset in terms of arrays and index
+        let arrayOffset = 0;
+
+        while(offset >= this._arrays[arrayOffset].length) {
+            offset -= BigInt(this._arrays[arrayOffset].length);
+            arrayOffset++;
+        }
+
+        let indexOffset = Number(offset);
+
+        // Trimming from the front of the arrays
+        this._arrays.splice(0, arrayOffset)
+        // Trimming the front of the indices
+        this._arrays[0] = this._arrays[0].subarray(indexOffset);
+
+        /*
+         * Trimming from the end of the arrays using length
+         */
+
+        // Getting the length in terms of arrays and index
+        let arrayLength = 0;
+
+        while(arrayLength < this._arrays.length && length >= this._arrays[arrayLength].length) {
+            length -= BigInt(this._arrays[arrayLength].length);
+            arrayLength++;
+        }
+
+        let indexLength = Number(length);
+
+        // Trimming from the end of the arrays
+        this._arrays.splice(arrayLength+1);
+        // Trimming the end of the indices
+        if(indexLength != 0) {
+            // If any further indices are needed trim up to that point
+            this._arrays[arrayLength] = this._arrays[arrayLength].subarray(0, indexLength);
+        } else {
+            // If no further indices are needed, trim the whole array
+            this._arrays.splice(arrayLength);
+        }
+
+        /*
+         * Repairing the internal pointers to the current board
+         */
+        // If the pointer was cut from the beginning
+        this._currArray -= arrayOffset;
+        if(this._currArray < 0) {
+            this._currArray = 0;
+            this._index = 0;
+        } else if(this._currArray == 0) {
+            this._index -= indexOffset;
+            if(this._index < 0) {
+                this._index = 0;
+            }
+        } else if(this._currArray == arrayLength) {
+            this._index -= indexLength;
+        }
+    }
+}
 
 /**
  * Manages the tree of BoardNodes
@@ -17,85 +148,69 @@ class DecisionTree {
         // false means player 0, true means player 1
         this.turn = false;
 
-        this.treeViews = [];
+        this.treeArrays = [];
 
         // Create the root array of a single blank board node
         // Index shows where we left off generating boards in the array
         // We will generate the single needed node, so we set index to 
         // the length of the array
-        this.index = bytesPerBoard;
-        let lastBuffer = new ArrayBuffer(bytesPerBoard);
-        this.lastView = new Uint8Array(lastBuffer);
-        this.treeViews.push(this.lastView);
+        this.lastArray = new BigByteArray(bytesPerBoardN);
+        this.treeArrays.push(this.lastArray);
 
         // Create the next array of its 7 children
-        let currentBuffer = new ArrayBuffer(bytesPerBoard * 7);
-        this.currentView = new Uint8Array(currentBuffer);
-        this.treeViews.push(this.currentView);
+        this.currentArray = new BigByteArray(7n * bytesPerBoardN);
+        this.treeArrays.push(this.currentArray);
 
         // Push a piece to a different column of each of the children
         for(let i=0; i < 7; i++) {
-            let baseByte = bytesPerBoard * i + i;
+            let view = this.currentArray.nextBoard();
 
-            this.currentView[baseByte] = 1; 
-            this.currentView[baseByte + 7] = 1;
+            view[i] = 1;
+            view[i + 7] = 1;
         }
 
         this.pause = true;
 
+        // Avoiding the assertion by making the previous level ended
+        this.lastArray.nextBoard();
         this.deepenTree();
         this.generateBoards();
     }
 
     deepenTree() {
-        if(this.index < this.lastView.length) throw "A new tree level was created despite the last level being unfinished";
-        if(this.treeViews.length >= 11) throw "A tree deeper than 11 levels can't be created";
+        if(!this.lastArray.ended()) throw "A new tree level was created despite the last level being unfinished";
 
         // We want there to be room for 7 children of each board node in the current view
-        let newBuffer = new ArrayBuffer(this.currentView.length * 7);
-        let newView = new Uint8Array(newBuffer);
-        this.treeViews.push(newView);
+        let newArray = new BigByteArray(this.currentArray.length * 7n);
+        this.treeArrays.push(newArray);
 
-        this.lastView = this.currentView;
-        this.currentView = newView;
+        this.lastArray = this.currentArray;
+        this.currentArray = newArray;
 
-        this.index = 0;
+        this.lastArray.jumpTo(0n);
     }
 
     trimTree(columnChosen) {
         // We want to trim the tree when a column is chosen for a move
-        if(this.treeViews.length <= 2) throw "Tree isn't big enough to trim";
+        if(this.treeArrays.length <= 2) throw "Tree isn't big enough to trim";
 
         // The current board state can be removed
-        this.treeViews.splice(0, 1);
+        this.treeArrays.splice(0, 1);
 
-        let currentStart = columnChosen * bytesPerBoard;
-        let currentLength = bytesPerBoard;
-        for(let i=0; i < this.treeViews.length - 2; i++) {
+        let currentStart = BigInt(columnChosen) * bytesPerBoardN;
+        let currentLength = bytesPerBoardN;
+        for(let i=0; i < this.treeArrays.length; i++) {
             // We want to replace the current view of the array with a view containing
             // only the remaining section of the tree
-            this.treeViews[i] = this.treeViews[i].subarray(currentStart, currentStart + currentLength);
+            this.treeArrays[i].trim(currentStart, currentLength);
 
             // This segment of the tree in the next array will grow by 7 times
-            currentStart *= 7;
-            currentLength *= 7;
+            currentStart *= 7n;
+            currentLength *= 7n;
         }
 
-        let i = this.treeViews.length - 2;
-        // Dealing with the last view
-        // We want to update lastView and lastIndex
-        this.treeViews[i] = this.treeViews[i].subarray(currentStart, currentStart + currentLength);
-        this.lastView = this.treeViews[i];
-        this.index = Math.max(this.index - currentStart, 0);
-
-        currentStart *= 7;
-        currentLength *= 7;
-        i++;
-
-        // Dealing with the current view
-        // We want to update currentView and currentIndex
-        this.treeViews[i] = this.treeViews[i].subarray(currentStart, currentStart + currentLength);
-        this.currentView = this.treeViews[i];
+        this.lastArray = this.treeArrays[this.treeArrays.length - 2];
+        this.currentArray = this.treeArrays[this.treeArrays.length - 1];
 
         // Updating whose turn it is
         this.turn = !this.turn;
@@ -108,29 +223,29 @@ class DecisionTree {
             bitMaps[i] = 1 << i;
         }
 
-        while(this.index < this.lastView.length) {
-            let currBoard = this.lastView.subarray(this.index, this.index + bytesPerBoard);
-            if(this.nonLeafBoard(currBoard, bitMaps)) {
+        while(!this.lastArray.ended()) {
+            let lastBoard = this.lastArray.nextBoard();
+            if(this.nonLeafBoard(lastBoard, bitMaps)) {
                 /*
-                 * We now can generate the child nodes in currentView
+                 * We now can generate the child nodes in currentArray
                  */
                 for(let i=0; i < 7; i++) {
+                    let currBoard = this.currentArray.nextBoard();
                     // If a piece can be dropped in the column
-                    if(this.lastView[this.index+i] < 6) {
+                    if(lastBoard[i] < 6) {
                         // Copy the current board state over
-                        let baseIndex = this.index * 7 + i * bytesPerBoard;
-                        this.currentView.set(currBoard, baseIndex);
+                        currBoard.set(lastBoard);
 
-                        baseIndex += i;
                         // Drop the piece down the corresponding column
-                        if(this.turn == (this.treeViews.length & 1)) {
-                            this.currentView[baseIndex + 7] += bitMaps[this.currentView[baseIndex]];
+                        if(this.turn == (this.treeArrays.length & 1)) {
+                            currBoard[i + 7] += bitMaps[currBoard[i]];
                         }
-                        this.currentView[baseIndex]++;
+                        currBoard[i]++;
                     }
                 }
+            } else {
+                this.currentArray.jumpAhead(7n * bytesPerBoardN);
             }
-            this.index += bytesPerBoard;
         }
     }
 
