@@ -2,44 +2,26 @@
  * Overall game-board element styling
  */
  .board {
+    --piece-size: 4rem;
+    --piece-margin: 0.5rem;
+
+    --piece-color-one: #b30000;
+    --piece-color-two: #000099;
+
     display: flex;
     justify-content: center;
     align-items: center;
     align-content: center;
     flex-direction: column;
 }
+
 
 
 /*
- * Settings
+ * Styling of the main board
  */
-.game-settings {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    align-content: center;
-}
-
-.game-settings > div {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    align-content: center;
-    flex-direction: column;
-    padding: 5%;
-}
-
-.setting-icon {
-    width: 2rem;
-    height: 2rem;
-}
-
-
-
-
-
 game-piece {
-    --piece-color: darkblue;
+    --piece-color: var(--piece-color-one);
 
     width: var(--piece-size);
     height: var(--piece-size);
@@ -100,17 +82,13 @@ game-piece::after, game-piece::before {
 
 
 .indicator-container {
-    --piece-size: 4rem;
-    --piece-margin: 0.5rem;
-
     padding: 0.5rem;
 
     display: inline-flex;
 }
 
 .piece-container {
-    --piece-size: 4rem;
-    --piece-margin: 0.5rem;
+    position: relative;
 
     padding: 0.5rem;
     border-radius: 1rem;
@@ -127,4 +105,138 @@ game-piece::after, game-piece::before {
 .column {
     display: inline-flex;
     flex-direction: column;
+}
+
+
+
+
+
+/*
+ * Settings
+ */
+ .settings-bar {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    align-content: center;
+}
+
+.settings-bar > div {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    align-content: center;
+    flex-direction: column;
+    padding: 5%;
+}
+
+.setting-icon {
+    width: 2rem;
+    height: 2rem;
+    cursor: pointer;
+}
+
+.settings-popup {
+    position: absolute;
+
+    left: 50%;
+    top: 50%;
+    width: max-content;
+    transform: translate(-50%, -50%) scale(0);
+    opacity: 0;
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    align-content: center;
+    flex-direction: column;
+    gap: 1rem;
+
+    padding: 0.5rem;
+    border-radius: 1rem;
+    box-shadow: 0 0 0 0.25rem black;
+
+    background-color: rgba(0, 0, 0, 0.75);
+
+    font-size: 1.5rem;
+    color: white;
+}
+
+.popup-open {
+    opacity: 100%;
+    transform: translate(-50%, -50%) scale(100%);
+    transition: opacity 500ms ease, transform 0ms 0ms;
+}
+
+.popup-close {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0);
+    transition: opacity 250ms ease, transform 0ms 250ms;
+}
+
+.settings-popup > div {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    align-content: center;
+    gap: 1rem;
+}
+
+.settings-popup > div > div {
+    font-size: 1rem;
+}
+
+
+
+
+
+/*
+ * Misc
+ */
+.game-over {
+    display: none;
+
+    font-weight: bold;
+    font-size: 2rem;
+}
+
+.eval-bar {
+    display: none;
+    flex-direction: column;
+
+    padding: 0.5rem;
+}
+
+.eval-bar > div {
+    display: inline-flex;
+    justify-content: space-around;
+    align-items: center;
+    align-content: center;
+
+    margin: 0.25rem 0 0 0;
+}
+
+.eval-bar p {
+    display: inline;
+
+    margin: 0;
+    height: 1rem;
+
+    text-align: center;
+    font-weight: bold;
+}
+
+.eval-cols > p {
+    display: inline;
+
+    margin: 0;
+
+    width: calc(var(--piece-size) + 2 * var(--piece-margin));
+    height: 1rem;
+
+    text-align: center;
+    font-weight: bold;
+}
+.eval-bar > div > div {
+    width: calc(var(--piece-size) + 2 * var(--piece-margin));
 }
